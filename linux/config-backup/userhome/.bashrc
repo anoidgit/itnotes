@@ -4,7 +4,17 @@
 [[ $- != *i* ]] && return
 
 #******** Default display ********
-#PS1="[\u @ \h > \w ] \$ "
+function git-branch-name {
+  git symbolic-ref HEAD 2>/dev/null | cut -d"/" -f 3
+}
+function git-branch-prompt {
+  local branch=`git-branch-name`
+  if [ $branch ]; then printf " [%s]" $branch; fi
+}
+
+PS1="\u@\h \[\e[0;36m\]\W\[\e[0m\]\[\e[0;32m\]\$(git-branch-prompt)\[\e[0m\] \$ "
+
+#PS1="\e[1m\u\e[0m @ \e[36m\h\e[0m |$(date +%D) > \w ] \$ "
 
 innerip=`ip addr | grep -o -P '1[^2]?[0-9]?(\.[0-9]{1,3}){3}(?=\/)'`
 gateway=`ip route | grep 'via' |cut -d ' ' -f 3 |uniq`
@@ -19,7 +29,7 @@ echo -e "\e[36mHello, \e[1m`whoami`\e[0m
 \e[37m+++++++=====\e[0m\e[37;5m Tips \e[0m\e[37m=====+++++++\e[0m
 \e[1mrecord terminal: rec\e[0m
 \e[1mplay recordfile: play [filename]\e[0m
-\e[1mbackup configs : backup\e[0m
+\e[1mbackup configs : backupconfigs\e[0m
 
 \e[37m+++++=====\e[0m\e[37;5mLet's Begin\e[0m\e[37m====+++++\e[0m"
 
@@ -40,6 +50,26 @@ bind Space:magic-space
 
 alias proxyon="export http_proxy='http://127.0.0.1:8080';export https_proxy='http://127.0.0.1:8080'"
 alias proxyoff="unset https_proxy;unset https_proxy"
+
+# ******** important configs backup******
+configs_files=( .bashrc .gitconfig .vimrc .makepkg.conf .bash-powerline.sh)
+path_for_bakcup=~/Documents/it/itnotes/linux/config-backup/userhome/
+
+function backupconfigs(){
+    cd ~
+    for config in ${configs_files[*]}
+    do
+        \cp -av ~/$config $path_for_bakcup
+    done
+}
+
+function restoreconfigs(){
+    cd ~
+    for config in ${configs_files[*]}
+    do
+        \cp -av $path_for_bakcup/$config ~/
+    done
+}
 
 # ******** alias ********
 
@@ -140,8 +170,6 @@ alias atd='systemctl start atd'
 alias cleanoldlinks='sudo rm $(find -xtype l -print)'
 
 # ===common tools short commands===
-#backup important files
-alias backup="echo 'Starting' && \cp -f ~/.bashrc ~/.gitconfig ~/.vimrc ~/.makepkg.conf ~/.bash-powerline.sh ~/Documents/it/itnotes/linux/config-backup/userhome/ && echo Done"
 
 #---network---
 # proxychains
@@ -190,11 +218,12 @@ alias dockerstart='sudo systemctl start docker && docker ps -a'
 #libvirtd
 alias virt='sudo modprobe virtio && sudo systemctl start libvirtd ebtables dnsmasq'
 
-#youdao dict 有道词典
+#youdao dict
 alias yd='ydcv'
 
 #npm -g list --depth=0
 alias npmlistg='sudo npm -g list --depth=0'
+alias npmtaobao=' --registry=https://registry.npm.taobao.org'
 
 #docker container
 alias hack='sudo systemctl start docker && docker start hack && docker exec -it hack bash'
